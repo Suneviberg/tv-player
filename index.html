@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Clean Home player</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    iframe { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border: 0; }
+  </style>
+</head>
+<body>
+  <!-- Clean Home (a Samsung TV app) loads this page in its live window. YouTube's embedded player
+       needs to sit on a real web page with an address; the TV app itself has none (Error 153). -->
+  <iframe id="yt" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <script>
+    (function () {
+      var query = {}, yt = document.getElementById('yt');
+      location.search.replace(/^\?/, '').split('&').forEach(function (pair) {
+        var kv = pair.split('=');
+        if (kv[0]) query[kv[0]] = decodeURIComponent(kv[1] || '');
+      });
+      var id = (query.v || '').replace(/[^\w-]/g, '');
+      if (id) {
+        yt.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=' + (query.mute === '1' ? 1 : 0) +
+          '&controls=0&rel=0&playsinline=1&iv_load_policy=3&cc_load_policy=0&disablekb=1&fs=0&enablejsapi=1' +
+          '&origin=' + encodeURIComponent(location.origin);
+      }
+      // Clean Home sends {event: 'command', func: 'mute' | 'unMute'}; pass it on to the YouTube player.
+      window.addEventListener('message', function (e) {
+        if (e.source === window.parent && yt.contentWindow) yt.contentWindow.postMessage(e.data, 'https://www.youtube.com');
+      });
+    }());
+  </script>
+</body>
+</html>
